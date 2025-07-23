@@ -1,3 +1,5 @@
+import math
+
 class Value:
     def __init__(self, data: float, _children: tuple = (), _op: str = '', label: str = '') -> "Value":
         """
@@ -24,4 +26,12 @@ class Value:
 
     def __mul__(self, other: "Value") -> "Value":
         out = Value(self.data * other.data, (self, other), '*')
+        return out
+
+    def tanh(self):
+        # We could have implemented the divison and the exponientiation but we want
+        # to apply as few operations as possible
+        x = self.data
+        t = (math.exp(2*x) - 1) / (math.exp(2*x) + 1)
+        out = Value(t, (self, ), 'tanh')
         return out

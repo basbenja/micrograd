@@ -24,7 +24,7 @@ class Value:
         self._backward = lambda: None
 
     def __repr__(self) -> str:
-        return f"Value(data={self.data})"
+        return f"Value(data={self.data}, label={self.label})"
 
     def __add__(self, other: "Value") -> "Value":
         out = Value(self.data + other.data, (self, other), '+')
@@ -62,3 +62,17 @@ class Value:
         out._backward = _backward
 
         return out
+
+    def backward(self):
+        topo = []
+        visited = set()
+        def build_topo(v: Value):
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    build_topo(child)
+                topo.append(v)
+        build_topo(self)
+        self.grad = 1
+        for node in reversed(topo):
+            node._backward()

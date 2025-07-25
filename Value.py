@@ -32,8 +32,8 @@ class Value:
         # Remember: when a value is the sum of two values, the local derivative is 1
         # It just backpropagates the previous gradient
         def _backward():
-            self.grad = 1.0 * out.grad
-            other.grad = 1.0 * out.grad
+            self.grad += 1.0 * out.grad
+            other.grad += 1.0 * out.grad
         out._backward = _backward
 
         return out
@@ -44,8 +44,8 @@ class Value:
         # Remember: when a value is the product of two values, the local derivative of
         # each operand is the other operand
         def _backward():
-            self.grad = other.data * out.grad
-            other.grad = self.data * out.grad
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
         out._backward = _backward
 
         return out

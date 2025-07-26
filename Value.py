@@ -1,5 +1,7 @@
 import math
 
+from typing import Union
+
 class Value:
     def __init__(self, data: float, _children: tuple = (), _op: str = '', label: str = '') -> "Value":
         """
@@ -26,26 +28,70 @@ class Value:
     def __repr__(self) -> str:
         return f"Value(data={self.data}, label={self.label})"
 
-    def __add__(self, other: "Value") -> "Value":
+    def __add__(self, other: Union["Value", float, int]) -> "Value":
+        other = other if isinstance(other, Value) else Value(other, label=str(other))
         out = Value(self.data + other.data, (self, other), '+')
 
-        # Remember: when a value is the sum of two values, the local derivative is 1
-        # It just backpropagates the previous gradient
         def _backward():
+            # Remember: when a value is the sum of two values, the local derivative is 1.
+            # It just backpropagates the previous gradient. We multiply by out.grad because
+            # of the chain rule
             self.grad += 1.0 * out.grad
             other.grad += 1.0 * out.grad
         out._backward = _backward
 
         return out
 
-    def __mul__(self, other: "Value") -> "Value":
+    def __neg__(self):
+        # The __neg__ operator acts in this case:
+        #   a = Value(1.0)
+        #   -a
+        return self * -1
+
+    def __sub__(self, other: Union["Value", float, int]) -> "Value":
+        return self + (-other)
+
+    def __mul__(self, other: Union["Value", float, int]) -> "Value":
+        other = other if isinstance(other, Value) else Value(other, label=str(other))
         out = Value(self.data * other.data, (self, other), '*')
 
-        # Remember: when a value is the product of two values, the local derivative of
-        # each operand is the other operand
         def _backward():
+            # Remember: when a value is the product of two values, the local derivative of
+            # each operand is the other operand. We multiply by out.grad because of the
+            # chain rule
             self.grad += other.data * out.grad
             other.grad += self.data * out.grad
+        out._backward = _backward
+
+        return out
+
+    def __rmul__(self, other: Union[float, int]):
+        # Redirects to the __mul__ operation of thus class
+        return self * other
+
+    def __truediv__(self, other: Union["Value", float, int]): # self / other
+        return self * other**-1
+
+    def __pow__(self, other: Union[int, float]):
+        assert isinstance(other, (int, float)), "only supporting int/float powers for now"
+        out = Value(self.data**other, (self, ), f'**{other}')
+
+        def _backward():
+            # Derivative of the power function
+            # We multiply by out.grad because of the chain rule
+            self.grad += other * self.data**(other-1) * out.grad
+        out._backward = _backward
+
+        return out
+
+    def exp(self):
+        x = self.data
+        out = Value(math.exp(x), (self, ), 'exp')
+
+        def _backward():
+            # Derivative of the f(x) = e^x function
+            # We multiply by out.grad because of the chain rule
+            self.grad += out.data * out.grad
         out._backward = _backward
 
         return out
@@ -58,7 +104,9 @@ class Value:
         out = Value(t, (self, ), 'tanh')
 
         def _backward():
-            self.grad = (1 - t**2) * out.grad
+            # Derivative of the tanh function
+            # We multiply by out.grad because of the chain rule
+            self.grad += (1 - t**2) * out.grad
         out._backward = _backward
 
         return out

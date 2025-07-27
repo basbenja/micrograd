@@ -1,6 +1,6 @@
 from graphviz import Digraph
 
-from Value import Value
+from engine import Value
 
 
 def trace(root: Value) -> tuple[set, set]:

@@ -26,7 +26,7 @@ class Value:
         self._backward = lambda: None
 
     def __repr__(self) -> str:
-        return f"Value(data={self.data}, label={self.label})"
+        return f"Value(data={self.data})"
 
     def __add__(self, other: Union["Value", float, int]) -> "Value":
         other = other if isinstance(other, Value) else Value(other, label=str(other))
@@ -42,6 +42,9 @@ class Value:
 
         return out
 
+    def __radd__(self, other: Union[float, int]):
+        return self + other
+
     def __neg__(self):
         # The __neg__ operator acts in this case:
         #   a = Value(1.0)
@@ -50,6 +53,9 @@ class Value:
 
     def __sub__(self, other: Union["Value", float, int]) -> "Value":
         return self + (-other)
+
+    def __rsub__(self, other: Union[float, int]):
+        return self - other
 
     def __mul__(self, other: Union["Value", float, int]) -> "Value":
         other = other if isinstance(other, Value) else Value(other, label=str(other))
